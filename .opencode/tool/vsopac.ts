@@ -56,15 +56,21 @@ $windowsSet = 0
 foreach ($proc in $vscodeProcesses) {
     if ($proc.MainWindowHandle -ne [IntPtr]::Zero) {
         $hwnd = $proc.MainWindowHandle
-
-        # Add WS_EX_LAYERED style if not already present
         $exStyle = [WindowHelper]::GetWindowLong($hwnd, [WindowHelper]::GWL_EXSTYLE)
-        if (($exStyle -band [WindowHelper]::WS_EX_LAYERED) -eq 0) {
-            [WindowHelper]::SetWindowLong($hwnd, [WindowHelper]::GWL_EXSTYLE, $exStyle -bor [WindowHelper]::WS_EX_LAYERED) | Out-Null
-        }
 
-        # Set the window opacity
-        [WindowHelper]::SetLayeredWindowAttributes($hwnd, 0, $opacity, [WindowHelper]::LWA_ALPHA) | Out-Null
+        if ($percent -eq 100) {
+            # Remove WS_EX_LAYERED style to restore normal window
+            if (($exStyle -band [WindowHelper]::WS_EX_LAYERED) -ne 0) {
+                [WindowHelper]::SetWindowLong($hwnd, [WindowHelper]::GWL_EXSTYLE, $exStyle -band (-bnot [WindowHelper]::WS_EX_LAYERED)) | Out-Null
+            }
+        } else {
+            # Add WS_EX_LAYERED style if not already present
+            if (($exStyle -band [WindowHelper]::WS_EX_LAYERED) -eq 0) {
+                [WindowHelper]::SetWindowLong($hwnd, [WindowHelper]::GWL_EXSTYLE, $exStyle -bor [WindowHelper]::WS_EX_LAYERED) | Out-Null
+            }
+            # Set the window opacity
+            [WindowHelper]::SetLayeredWindowAttributes($hwnd, 0, $opacity, [WindowHelper]::LWA_ALPHA) | Out-Null
+        }
         $windowsSet++
     }
 }
